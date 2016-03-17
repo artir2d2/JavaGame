@@ -1,6 +1,5 @@
 package GuiUtil;
 
-import MapUtil.Player;
 import TCPUtil.Client;
 import TCPUtil.Server;
 
@@ -25,9 +24,11 @@ import javax.swing.JSpinner;
 import javax.swing.JLabel;
 import java.awt.Font;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.JProgressBar;
 
-public class GameGui extends JFrame {
+public class GameGui extends JFrame{
 	private JPanel mainMenu;
 	private JPanel contentPane;
 	private JPanel joinGameMenu;
@@ -39,6 +40,8 @@ public class GameGui extends JFrame {
 	private JSpinner portJoin;
 	private JSpinner mapSize;
 	private JProgressBar progressBar;
+	public static String messageToPop;
+	private JLabel serverMsg;
 	private final Action BTMM = new BackToMainMenu();
 	private final Action joinGameMenuPop = new JoinGameMenuPop();
 	private final Action createGameMenuPop = new CreateGameMenuPop();
@@ -116,7 +119,7 @@ public class GameGui extends JFrame {
 		joinGameMenu.add(nickname, gbc_nickname);
 		nickname.setColumns(10);
 
-		serverAddresTxt = new JTextField("Server Address");
+		serverAddresTxt = new JTextField("localhost");
 		serverAddresTxt.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
 		serverAddresTxt.setPreferredSize(new Dimension(400, 30));
 		GridBagConstraints gbc_serverAddresTxt = new GridBagConstraints();
@@ -135,9 +138,19 @@ public class GameGui extends JFrame {
 		gbc_portLabel.gridy = 2;
 		joinGameMenu.add(portLabel, gbc_portLabel);
 
+		serverMsg = new JLabel("");
+		serverMsg.setFont(new Font("Viner Hand ITC", Font.BOLD, 18));
+		Font font = new Font("Viner Hand ITC", Font.BOLD, 18);
+		GridBagConstraints gbc_ServerMsg = new GridBagConstraints();
+		//gbc_ServerMsg.insets = new Insets(0, 0, 5, 5);
+		gbc_ServerMsg.gridx = 1;
+		gbc_ServerMsg.gridy = 5;
+		joinGameMenu.add(serverMsg, gbc_ServerMsg);
+
 		portJoin = new JSpinner();
 		GridBagConstraints gbc_portJoin = new GridBagConstraints();
 		portJoin.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
+		portJoin.setValue(80);
 		gbc_portJoin.fill = GridBagConstraints.HORIZONTAL;
 		gbc_portJoin.insets = new Insets(0, 0, 5, 0);
 		gbc_portJoin.gridx = 1;
@@ -194,7 +207,7 @@ public class GameGui extends JFrame {
 
 		portValue = new JSpinner();
 		portValue.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
-		portValue.setValue(8080);
+		portValue.setValue(80);
 		GridBagConstraints gbc_portValue = new GridBagConstraints();
 		gbc_portValue.fill = GridBagConstraints.HORIZONTAL;
 		gbc_portValue.insets = new Insets(0, 0, 5, 0);
@@ -273,18 +286,29 @@ public class GameGui extends JFrame {
 			cl.show(contentPane, "main_menu");
 		}
 	}
-	private class JoinGame extends AbstractAction {
+	private class JoinGame extends AbstractAction implements Runnable{
 		public JoinGame() {
 			putValue(NAME, "Join Game");
 			putValue(SHORT_DESCRIPTION, "Have fun!");
 		}
 		public void actionPerformed(ActionEvent e) {
-			Player player = new Player(nickname.getText(),0,0,"grafiki//hero1.png");
+			Thread cgt = new Thread(this);
+			cgt.start();
+			joinGame1.setEnabled(false);
+
+		}
+		@Override
+		public void run() {
+			//Player player = new Player(nickname.getText(),0,0,"grafiki//hero1.png");
 			int port = (int)portJoin.getValue();
 			String serverAddress = serverAddresTxt.getText();
 			Client client;
 			try {
-				client = new TCPUtil.Client(serverAddress,port);
+				client = new TCPUtil.Client(serverAddress,port,nickname.getText());
+				if(messageToPop!=null){
+					serverMsg.setText(messageToPop);
+					serverMsg.updateUI();
+				}
 				Thread clientThread = new Thread(client);
 				clientThread.start();
 			} catch (IOException e1) {
@@ -292,13 +316,23 @@ public class GameGui extends JFrame {
 			}
 		}
 	}
-	private class CreateGame extends AbstractAction {
+
+	private class CreateGame extends AbstractAction implements Runnable{
+		ExecutorService exec= Executors.newCachedThreadPool();
 		Server server = null; //create host server
 		public CreateGame() {
 			putValue(NAME, "Create Game");
 			putValue(SHORT_DESCRIPTION, "Creates a new game session and connects a host player to the freshly created server!");
 		}
 		public void actionPerformed(ActionEvent e) {
+			Thread cgt = new Thread(this);
+			cgt.start();
+			createGame1.setEnabled(false);
+		}
+
+		@Override
+		public void run() {
+			String nickName = nicknameTxt1.getText();
 			int port = (int)portValue.getValue();
 			int mapSizeInt = (int)mapSize.getValue();
 			try {
@@ -313,33 +347,36 @@ public class GameGui extends JFrame {
 							progressBar.setValue((int)(100*server.returnWorldMapProgress()));
 							try {
 								Thread.currentThread();
-								Thread.sleep(100);
+								Thread.sleep(1);
 							} catch (InterruptedException e1) {
 								e1.printStackTrace();
 							}
 						}
-
 					}
 				});
-				progresUpdate.start();
-				//server.worldMap.create(); //old fasioned map making unefficient because its blocking entire GUI
-				server.worldMap.createMap.start(); //that is much better
 				Thread serverThread = new Thread(server);
-				serverThread.start();
+				this.exec.execute(progresUpdate);
+				this.exec.execute(serverThread);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
 			Client client; //creating host client
 			try {
-				client = new TCPUtil.Client("localhost",port);
+				client = new TCPUtil.Client("localhost",port,nickName);
+				if(messageToPop!=null){
+					serverMsg.setText(messageToPop);
+					serverMsg.updateUI();
+				}
 				Thread clientThread = new Thread(client);
-				clientThread.start();
+				this.exec.execute(clientThread);//.start();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 
 			}
-			//Player player = new Player(nicknameTxt1.getText(),0,0,"grafiki//hero1.png");
+
 		}
 	}
+
+
 }
 

@@ -1,4 +1,6 @@
 package MapUtil;
+import TCPUtil.Server;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -35,17 +37,18 @@ public class WorldMap2 implements Serializable {
 	/**
 	 * This member of WorldMap2 class creates thread which indicates create() method of new world map!
 	 */
+	public boolean done = false;
 	public Thread createMap = new Thread(new Runnable() {
 		@Override
 		public void run() {
-			create();
+				create();
+				done = true;
 		}
 	});
 	/**
 	 * Creates a world map, by placing seeds, growing them and other complex things. This is actualy the core of this class
 	 */
 	public int create() {
-
 		fillWith(0, 0);
 		int count = (int) (size.getX() * size.getY() * 0.33);
 		bedRock((int) Math.sqrt(size.getX()), count, 1, 1, 0);
@@ -57,25 +60,29 @@ public class WorldMap2 implements Serializable {
 			System.out.println(i);
 			progress+=0.02;
 		}
-		placeTrees(12000);
+		placeTrees((int)(getXSize()*getYSize()*0.15));
+		placeRocks((int)(getXSize()*getYSize()*0.06));
 		progress = 1.0;
 		return 1;
 	}
 
-	public void placePlayer(String playerName) {
+	public Player placePlayer(String playerName,int playerID) {
 		Random random = new Random();
 		int x, y;
+		Player player;
 		while (true) {
 			x = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
 			y = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
-			if (matrix[x][y].getCord().getZ() != 0) {
-				matrix[x][y].addObject(new Player(playerName, x, y, ""));
+			if (matrix[x][y].getCord().getZ() != 0 && matrix[x][y].getAllObjects().size()==0) {
+				player = new Player(playerName, x, y, "hero1.png");//+playerID+".png");
+				matrix[x][y].addObject(player);
+				break;
 			}
 		}
+		return player;
 	}
 
-	private void placeTrees(int seedCount) {
-		System.out.println("robie dzewo");
+	private void placeRocks(int seedCount){
 		Random random = new Random();
 		int seedx;
 		int seedy;
@@ -83,9 +90,23 @@ public class WorldMap2 implements Serializable {
 			seedx = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
 			seedy = random.nextInt((int) (size.getY() * 0.9)) + (int) (size.getY() * 0.05);
 			if (matrix[seedx][seedy].getId() != 0 && matrix[seedx][seedy].getAllObjects().size()==0) {
-				String spriteName = "30"+random.nextInt(5)+".png";//random.nextInt(1)
-				System.out.println(spriteName);
-				matrix[seedx][seedy].addObject(new Tree(3, spriteName)); //temp id for the tree = 89, growthstage = 3...for now
+				String spriteName = "40"+random.nextInt(3)+".png";//random.nextInt(1)
+				matrix[seedx][seedy].addObject(new Rock(40, spriteName)); //temp id for the tree = 89, growthstage = 3...for now
+			}
+			seedCount--;
+		}
+	}
+
+	private void placeTrees(int seedCount) {
+		Random random = new Random();
+		int seedx;
+		int seedy;
+		while (seedCount > 0) {
+			seedx = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
+			seedy = random.nextInt((int) (size.getY() * 0.9)) + (int) (size.getY() * 0.05);
+			if (matrix[seedx][seedy].getId() != 0 && matrix[seedx][seedy].getAllObjects().size()==0) {
+				String spriteName = "30"+random.nextInt(4)+".png";//random.nextInt(1)
+				matrix[seedx][seedy].addObject(new Tree(20, spriteName)); //temp id for the tree = 89, growthstage = 3...for now
 			}
 			seedCount--;
 		}
@@ -318,6 +339,10 @@ public class WorldMap2 implements Serializable {
 			System.out.println("");
 		}
 		return result;
+	}
+
+	public Cell getCell(int x, int y){
+		return this.matrix[x][y];
 	}
 
 	public static void main(String[] args){

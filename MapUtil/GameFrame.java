@@ -1,5 +1,7 @@
 package MapUtil;
 
+import TCPUtil.Client;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -14,14 +16,13 @@ import java.util.StringJoiner;
 public class GameFrame extends Canvas {
     private SpriteCache spriteCache;
     private BufferStrategy bufferStrategy;
-    private Player player;
     private double width = 1550;
     private double height = 1050;
-    private WorldMap2 worldMap2;
+    //private WorldMap2 worldMap2;
 
     public GameFrame (){
         spriteCache = new SpriteCache();
-        JFrame frame = new JFrame(".:Gra:.");
+        JFrame frame = new JFrame("Welcome to the game!");
         setSize((int)width,(int)height);
         frame.add(this);
         frame.pack();
@@ -33,18 +34,15 @@ public class GameFrame extends Canvas {
         requestFocus();
     }
 
-    public void init(){
-        worldMap2 = new WorldMap2(300, 300);
-        worldMap2.create();//.start();
-        player = new Player();
-        player.setPozX(150);
-        player.setPozY(150);
-    }
+//    public void init(){
+//        worldMap2 = new WorldMap2(300, 300);
+//        worldMap2.create();//.start();
+//    }
 
-    public boolean play(){
-        init();
+    public void play(){
+        //init();
         while(true){
-            paintWorld(player);
+            paintWorld();
         }
     }
     /*public void chooseGraph(){
@@ -79,82 +77,90 @@ public class GameFrame extends Canvas {
     }*/
 
     public int checkHeight(int dx, int dy){
-        if(worldMap2.getMatrix()[dx][dy].getCord().getZ()>=17)
+        if(Client.cellsToRender[dx][dy].getCord().getZ()>=17)
             return 2;
-        else if(worldMap2.getMatrix()[dx][dy].getCord().getZ()==0) return 3;
+        else if(Client.cellsToRender[dx][dy].getCord().getZ()==0) return 3;
         else return 1;
     }
 
-    private void paintWorld(Player player) {
+    private void paintWorld() {
         Graphics2D g2 = (Graphics2D)bufferStrategy.getDrawGraphics();
         g2.clearRect(0,0,1550,1050);
-        int x = player.getPozX();
-        int y = player.getPozY();
-        x-=15;
-        y-=10;
-        if(x<0) x=0;
-        if(y<0) y=0;
-        Cell matrix[][] = worldMap2.getMatrix();
+        //x-=15;
+        //y-=10;
+        //if(x<0) x=0;
+        //if(y<0) y=0;
+        Cell matrix[][] = Client.cellsToRender;//= worldMap2.getMatrix();
         Cell cell = null;
         int screenX = 0;
         int screenY;
-        Random rand = new Random();
-        for(int i =x; i<x+31; i++) {
-            screenY = 0;
-            for (int j = y; j < y + 21; j++) {
-                if (checkHeight(i, j) == 3) {
-                    g2.drawImage(spriteCache.getSprite("woda.png"), screenX * 50, screenY * 50, this);
+        try{
+            for(int i =0; i<31; i++) {
+                screenY = 0;
+                for (int j = 0; j <21; j++) {
+                    if (checkHeight(i, j) == 3) {
+                        g2.drawImage(spriteCache.getSprite("woda.png"), screenX * 50, screenY * 50, this);
+                    }
+                    screenY++;
                 }
-                screenY++;
+                screenX++;
             }
-            screenX++;
+        }catch(ArrayIndexOutOfBoundsException e){
+            e.printStackTrace();
         }
         screenX = 0;
-        for(int i =x; i<x+31; i++){
-            screenY = 0;
-            for(int j=y; j<y+21; j++){
-                cell = matrix[i][j];
-                ArrayList<MapObject> allObjects=cell.getAllObjects();
-                if(checkHeight(i,j)==1 || checkHeight(i,j)==2){
-                    g2.drawImage(spriteCache.getSprite( checkHeight(i,j) + "09.png"), screenX*50, screenY*50, this);
-                }
-                if (j>0 && matrix[i][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i,j - 1) + "01.png"), screenX*50, screenY*50, this);
-                }
-                if (matrix[i + 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i + 1,j) + "02.png"), screenX*50, screenY*50, this);
-                }
-                if (matrix[i][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i,j + 1) + "03.png"), screenX*50, screenY*50, this);
-                }
-                if (i>0 && matrix[i - 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i - 1,j) + "04.png"), screenX*50, screenY*50, this);
-                }
-                if (i>0 && j>0 && matrix[i - 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i - 1,j - 1) + "05.png"), screenX*50, screenY*50, this);
-                }
-                if (matrix[i + 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ() && j>0) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i + 1,j - 1) + "06.png"), screenX*50, screenY*50, this);
-                }
-                if (matrix[i + 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i + 1,j + 1) + "07.png"), screenX*50, screenY*50, this);
-                }
-                if (i>0 && matrix[i - 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    g2.drawImage(spriteCache.getSprite(checkHeight(i-1,j+1) + "08.png"), screenX*50, screenY*50, this);
-                }
+        try {
+            for (int i = 0; i < 31; i++) {
+                screenY = 0;
+                for (int j = 0; j < 21; j++) {
+                    cell = Client.cellsToRender[i][j];//matrix[i][j];
+                    ArrayList<MapObject> allObjects = cell.getAllObjects();
+                    if (checkHeight(i, j) == 1 || checkHeight(i, j) == 2) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i, j) + "09.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (j > 0 && matrix[i][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i, j - 1) + "01.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i<30 && matrix[i + 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i + 1, j) + "02.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (j<20 && matrix[i][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i, j + 1) + "03.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i > 0 && matrix[i - 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i - 1, j) + "04.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i > 0 && j > 0 && matrix[i - 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i - 1, j - 1) + "05.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i<30 && j>0 && matrix[i + 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ() && j > 0) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i + 1, j - 1) + "06.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i<30 && j<20 && matrix[i + 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i + 1, j + 1) + "07.png"), screenX * 50, screenY * 50, this);
+                    }
+                    if (i > 0 && j<20 && matrix[i - 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
+                        g2.drawImage(spriteCache.getSprite(checkHeight(i - 1, j + 1) + "08.png"), screenX * 50, screenY * 50, this);
+                    }
 
-                if(allObjects!=null)
-                for(MapObject ob : allObjects){
-                    g2.drawImage(spriteCache.getSprite(ob.getSpriteName()), screenX*50-10, screenY*50-10, this);
-                }
+                    if (allObjects != null)
+                        for (MapObject ob : allObjects) {
+                            if (ob instanceof Tree)
+                                g2.drawImage(spriteCache.getSprite("sh3a.png"), screenX * 50 - 30, screenY * 50 - 20, this);
+                            else if (ob instanceof Rock)
+                                g2.drawImage(spriteCache.getSprite("sh4.png"), screenX * 50 - 20, screenY * 50 - 30, this);
+                            g2.drawImage(spriteCache.getSprite(ob.getSpriteName()), screenX * 50 - 10, screenY * 50 - 25, this);
+                        }
 
-                screenY++;
-                //System.out.print("y = " + screenY + ", ");
+                    screenY++;
+                    //System.out.print("y = " + screenY + ", ");
+                }
+                screenX++;
+                //System.out.println("x = " + screenX);
             }
-            screenX++;
-            //System.out.println("x = " + screenX);
+        }catch(ArrayIndexOutOfBoundsException e){
+            e.printStackTrace();
         }
-
 
         bufferStrategy.show();
     }
@@ -163,5 +169,6 @@ public class GameFrame extends Canvas {
         GameFrame gra = new GameFrame();
         gra.play();
     }
+
 
 }

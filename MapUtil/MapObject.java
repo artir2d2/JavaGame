@@ -1,5 +1,6 @@
 package MapUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -9,7 +10,7 @@ import java.util.List;
  * To do so, Cell class needs to implement ExistListener and override existChange() method.
  * @author Artir2d2
  */
-public abstract class MapObject {
+public abstract class MapObject implements Serializable{
 	protected boolean exist = false;
 	private List<ExistListener> listeners = new ArrayList<ExistListener>();
 	protected String spriteName;

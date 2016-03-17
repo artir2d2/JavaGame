@@ -1,11 +1,13 @@
 package MapUtil;
 
+import java.io.Serializable;
+
 /**
  * Created by Adam Zadora on 2016-02-06.
  */
-public class Player extends MapObject{
-    private int pozX, pozY;
-    private String playerName;
+public class Player extends MapObject implements Serializable{
+    public int pozX, pozY;
+    public String playerName;
 
     public Player(String playerName, int x, int y, String playerSprite){
         this.playerName = playerName;

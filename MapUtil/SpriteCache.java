@@ -22,7 +22,8 @@ public class SpriteCache {
             System.out.println("Przy otwieraniu " + path);
             System.out.println("Wystapil blad : " + url
                     + " message: " + e.getMessage());
-            System.exit(0);
+            e.printStackTrace();
+            //System.exit(0);
             return null;
         }
     }
