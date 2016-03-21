@@ -1,14 +1,7 @@
 package MapUtil;
-import TCPUtil.Server;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.RunnableFuture;
 
 /**
  * This class implements World map. 
@@ -21,30 +14,22 @@ public class WorldMap2 implements Serializable {
 	//private River2 allRivers;
 	private int maxHeight;
 	public double progress=0.;
+	public static HashMap players;
 
 	public WorldMap2(int sizeX, int sizeY, int sizeZ) {
 		this.size = new Point(sizeX, sizeY, sizeZ);
 		this.matrix = new Cell[sizeX][sizeY];
 		this.maxHeight = 0;
+		players = new HashMap<Integer,Player>();
 	}
 
 	public WorldMap2(int sizeX, int sizeY) {
 		this.size = new Point(sizeX, sizeY, 0);
 		this.matrix = new Cell[sizeX][sizeY];
 		this.maxHeight = 0;
+		players = new HashMap<Integer,Player>();
 	}
 
-	/**
-	 * This member of WorldMap2 class creates thread which indicates create() method of new world map!
-	 */
-	public boolean done = false;
-	public Thread createMap = new Thread(new Runnable() {
-		@Override
-		public void run() {
-				create();
-				done = true;
-		}
-	});
 	/**
 	 * Creates a world map, by placing seeds, growing them and other complex things. This is actualy the core of this class
 	 */
@@ -74,12 +59,39 @@ public class WorldMap2 implements Serializable {
 			x = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
 			y = random.nextInt((int) (size.getX() * 0.9)) + (int) (size.getX() * 0.05);
 			if (matrix[x][y].getCord().getZ() != 0 && matrix[x][y].getAllObjects().size()==0) {
-				player = new Player(playerName, x, y, "hero1.png");//+playerID+".png");
+				player = new Player(playerName, x, y, "hero"+playerID+".png");//+playerID+".png");
 				matrix[x][y].addObject(player);
 				break;
 			}
 		}
 		return player;
+	}
+
+	public void movePlayer(Integer id, String direction){
+		int posX = ((Player)players.get(id)).getPozX();
+		int posY = ((Player)players.get(id)).getPozY();
+		switch(direction){
+			case "up":
+				matrix[posX][posY].removeObject((Player)players.get(id));
+				((Player)players.get(id)).setPozY(posY-1);
+				matrix[posX][posY-1].addObject((Player)players.get(id));
+				break;
+			case "down":
+				matrix[posX][posY].removeObject((Player)players.get(id));
+				((Player)players.get(id)).setPozY(posY+1);
+				matrix[posX][posY+1].addObject((Player)players.get(id));
+				break;
+			case "left":
+				matrix[posX][posY].removeObject((Player)players.get(id));
+				((Player)players.get(id)).setPozX(posX-1);
+				matrix[posX-1][posY].addObject((Player)players.get(id));
+				break;
+			case "right":
+				matrix[posX][posY].removeObject((Player)players.get(id));
+				((Player)players.get(id)).setPozX(posX+1);
+				matrix[posX+1][posY].addObject((Player)players.get(id));
+				break;
+		}
 	}
 
 	private void placeRocks(int seedCount){
@@ -309,14 +321,14 @@ public class WorldMap2 implements Serializable {
 	/**
 	 * Returns X size of world map
 	 */
-	public int getXSize() {
+	public synchronized int getXSize() {
 		return (int) size.getX();
 	}
 
 	/**
 	 * Returns Y size of world map
 	 */
-	public int getYSize() {
+	public synchronized int getYSize() {
 		return (int) size.getY();
 	}
 
@@ -341,12 +353,17 @@ public class WorldMap2 implements Serializable {
 		return result;
 	}
 
-	public Cell getCell(int x, int y){
+	public synchronized Cell getCell(int x, int y){
+		//System.out.println(x+"  "+y);
 		return this.matrix[x][y];
 	}
 
 	public static void main(String[] args){
 		WorldMap2 ww2 = new WorldMap2(500,500);
 		ww2.create();
+	}
+
+	public synchronized static Player getPlayer(int playerCount) {
+		return (Player)players.get(playerCount);
 	}
 }

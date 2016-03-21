@@ -1,14 +1,12 @@
 package MapUtil;
 
 import TCPUtil.Client;
+import TCPUtil.InputKeyEvent;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.StringJoiner;
 
 /**
  * Created by Adam Zadora on 2016-02-06.
@@ -16,14 +14,15 @@ import java.util.StringJoiner;
 public class GameFrame extends Canvas {
     private SpriteCache spriteCache;
     private BufferStrategy bufferStrategy;
-    private double width = 1550;
-    private double height = 1050;
-    //private WorldMap2 worldMap2;
+    InputKeyEvent ike;
 
     public GameFrame (){
+        this.ike = new InputKeyEvent();
         spriteCache = new SpriteCache();
         JFrame frame = new JFrame("Welcome to the game!");
-        setSize((int)width,(int)height);
+        double width = 1550;
+        double height = 1050;
+        setSize((int) width,(int) height);
         frame.add(this);
         frame.pack();
         frame.setResizable(false);
@@ -32,49 +31,17 @@ public class GameFrame extends Canvas {
         createBufferStrategy(2);
         bufferStrategy = getBufferStrategy();
         requestFocus();
+        this.addKeyListener(ike);
     }
 
-//    public void init(){
-//        worldMap2 = new WorldMap2(300, 300);
-//        worldMap2.create();//.start();
-//    }
-
-    public void play(){
-        //init();
-        while(true){
-            paintWorld();
-        }
-    }
-    /*public void chooseGraph(){
-        for(int i=1; i<size.getX()-1; i++) {
-            for (int j = 1; j < size.getY()-1; j++) {
-                if (matrix[i][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "01.png");
-                }
-                if (matrix[i + 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "02.png");
-                }
-                if (matrix[i + 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "03.png");
-                }
-                if (matrix[i - 1][j].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "04.png");
-                }
-                if (matrix[i - 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "09.png");
-                }
-                if (matrix[i + 1][j - 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "10.png");
-                }
-                if (matrix[i + 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "11.png");
-                }
-                if (matrix[i - 1][j + 1].getCord().getZ() > matrix[i][j].getCord().getZ()) {
-                    matrix[i][j].setSpriteName(checkHeight(i, j) + "12.png");
-                }
+    public synchronized void play(){
+        new Thread(){
+            public void run(){
+                while(true) paintWorld();
             }
-        }
-    }*/
+        }.start();
+
+    }
 
     public int checkHeight(int dx, int dy){
         if(Client.cellsToRender[dx][dy].getCord().getZ()>=17)
@@ -86,12 +53,8 @@ public class GameFrame extends Canvas {
     private void paintWorld() {
         Graphics2D g2 = (Graphics2D)bufferStrategy.getDrawGraphics();
         g2.clearRect(0,0,1550,1050);
-        //x-=15;
-        //y-=10;
-        //if(x<0) x=0;
-        //if(y<0) y=0;
-        Cell matrix[][] = Client.cellsToRender;//= worldMap2.getMatrix();
-        Cell cell = null;
+        Cell matrix[][] = Client.cellsToRender;
+        Cell cell;
         int screenX = 0;
         int screenY;
         try{
@@ -113,7 +76,7 @@ public class GameFrame extends Canvas {
             for (int i = 0; i < 31; i++) {
                 screenY = 0;
                 for (int j = 0; j < 21; j++) {
-                    cell = Client.cellsToRender[i][j];//matrix[i][j];
+                    cell = Client.cellsToRender[i][j];
                     ArrayList<MapObject> allObjects = cell.getAllObjects();
                     if (checkHeight(i, j) == 1 || checkHeight(i, j) == 2) {
                         g2.drawImage(spriteCache.getSprite(checkHeight(i, j) + "09.png"), screenX * 50, screenY * 50, this);
@@ -161,13 +124,12 @@ public class GameFrame extends Canvas {
         }catch(ArrayIndexOutOfBoundsException e){
             e.printStackTrace();
         }
-
         bufferStrategy.show();
     }
 
     public static void main(String args [] ) {
-        GameFrame gra = new GameFrame();
-        gra.play();
+        //GameFrame gra = new GameFrame(socket);//will not work with null here
+        //gra.play();
     }
 
 

@@ -22,4 +22,7 @@ public int getZ(){
 public void setZ(int z){
 	this.z = z;
 }
+	public String toString(){
+		return super.getX()+"  "+super.getY();
+	}
 }

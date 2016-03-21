@@ -15,8 +15,8 @@ public class Cell implements ExistListener, Serializable{
 	Cell(int x, int y, int z, int id){
 		this.coord = new Point(x,y,z);
 		this.id = id;
-		this.object = new ArrayList<MapObject>();
-	};
+		this.object = new ArrayList<>();
+	}
 
 	public int getId(){
 		return this.id;
@@ -36,11 +36,7 @@ public class Cell implements ExistListener, Serializable{
 	}
 	
 	public void removeObject(MapObject obj){
-			object.remove(obj);
-	}
-
-	public MapObject getObject(int i){
-		return object.get(i);
+		System.out.println(object.remove(obj));
 	}
 	
 	public ArrayList<MapObject> getAllObjects(){

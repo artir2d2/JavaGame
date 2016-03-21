@@ -6,8 +6,6 @@ import MapUtil.Cell;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,60 +14,56 @@ import java.util.concurrent.FutureTask;
 /**
  * Created by Artir2d2 on 26.02.2016.
  */
-public class Client implements Runnable{
-    private static ExecutorService exec;
-    private static InetAddress adr;
-    private static Callable<String> clientTask;
-    private static ClientTask task;
-    private static ClientTaskCallback<String> ctc;
-    private int port;
+public class Client{
     protected static String clientID;
-    private BufferedReader in;
-    private PrintWriter out;
+    protected static ObjectOutputStream out;
+    protected static ObjectInputStream in;
     private Socket socket;
     public static Cell cellsToRender[][];
 
     public Client(String hostAddress,int port,String playerName) throws IOException {
-        this.adr = InetAddress.getByName(hostAddress);
-        this.port = port;
-        this.cellsToRender = new Cell[31][21];
+        InetAddress adr = InetAddress.getByName(hostAddress);
+        cellsToRender = new Cell[31][21];
         try{
             socket = new Socket(adr,port);
         }catch(IOException e) {
             System.err.println("Creating socket failed");
         }
+        in = new ObjectInputStream(this.socket.getInputStream());
+        out = new ObjectOutputStream(this.socket.getOutputStream());
 
-        this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream())); //pobieranie danych
-        this.out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream())),true); //wysyłanie danych
-        this.clientID = in.readLine();//getting client id from server
-        this.out.println(playerName);//sending player nickname to server
+        try {
+            clientID = (String)in.readObject();//getting client id from server
+            System.out.println("Client: "+clientID);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        out.writeObject(playerName);
         if(clientID.contains("ERROR")){ //message to print if something gone wrong on server side
             GameGui.messageToPop = clientID;
-            System.out.println(clientID);
+            System.out.println("Client: "+clientID);
         }else{
+            System.out.println("Connected to server");
             GameGui.messageToPop = "Connected to server";
-            String startClientMessage = in.readLine(); //waits until server send "startclient" message
+            String startClientMessage = ""; //waits until server send "startclient" message
+            try {
+                in = new ObjectInputStream(this.socket.getInputStream());
+                out = new ObjectOutputStream(this.socket.getOutputStream());
+                startClientMessage = (String)in.readObject();
+                System.out.println("Client: succes with reading object");
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            System.out.println(startClientMessage+"<-tu startclient");
             if(startClientMessage.equals("startclient")){ //now when the server is ready, client also starts its game task
-                this.exec = Executors.newCachedThreadPool();
-                task = new ClientTask(socket);
-                ctc = new ClientTaskCallback<String>(task);
+                ExecutorService exec = Executors.newCachedThreadPool();
+                ClientTask task = new ClientTask();
+                ClientTaskCallback<String> ctc = new ClientTaskCallback<String>(task);
                 exec.execute(ctc);
                 System.out.println("Adress = " + adr);
             }
         }
 
-
-    }
-
-    @Override
-    public void run() {
-//        try {
-//            task = new ClientTask(adr,port);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        ctc = new ClientTaskCallback<String>(task);
-//        exec.execute(ctc);
 
     }
 

@@ -14,7 +14,6 @@ import java.awt.GridBagLayout;
 import javax.swing.JButton;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.CardLayout;
 import javax.swing.JTextField;
@@ -29,9 +28,7 @@ import java.util.concurrent.Executors;
 import javax.swing.JProgressBar;
 
 public class GameGui extends JFrame{
-	private JPanel mainMenu;
 	private JPanel contentPane;
-	private JPanel joinGameMenu;
 	private JTextField serverAddresTxt;
 	private CardLayout cl = new CardLayout();
 	private JTextField nickname;
@@ -42,25 +39,20 @@ public class GameGui extends JFrame{
 	private JProgressBar progressBar;
 	public static String messageToPop;
 	private JLabel serverMsg;
-	private final Action BTMM = new BackToMainMenu();
-	private final Action joinGameMenuPop = new JoinGameMenuPop();
-	private final Action createGameMenuPop = new CreateGameMenuPop();
 	private final Action joinGame1 = new JoinGame();
 	private final Action createGame1 = new CreateGame();
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					GameGui frame = new GameGui();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+		EventQueue.invokeLater(() -> {
+            try {
+                GameGui frame = new GameGui();
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 	}
 
 	/**
@@ -76,14 +68,15 @@ public class GameGui extends JFrame{
 		/*
 		 * Main menu
 		 */
-		String BGImage = new String("BGImage.png");
-		mainMenu = new ImagePanel(BGImage);
+		String BGImage = "BGImage.png";
+		JPanel mainMenu = new ImagePanel(BGImage);
 		contentPane.add(mainMenu, "main_menu");
 		GridBagLayout gbl_mainMenu = new GridBagLayout();
 
 		mainMenu.setLayout(gbl_mainMenu);
 		JButton joinGameBtn = new JButton("Join Game");
 		joinGameBtn.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
+		Action joinGameMenuPop = new JoinGameMenuPop();
 		joinGameBtn.setAction(joinGameMenuPop);
 		joinGameBtn.setPreferredSize(new Dimension(200, 50));
 		GridBagConstraints gbc_joinGameBtn = new GridBagConstraints();
@@ -94,6 +87,7 @@ public class GameGui extends JFrame{
 
 		JButton createGameBtn = new JButton("Create Game");
 		createGameBtn.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
+		Action createGameMenuPop = new CreateGameMenuPop();
 		createGameBtn.setAction(createGameMenuPop);
 		createGameBtn.setPreferredSize(new Dimension(200, 50));
 		GridBagConstraints gbc_createGameBtn = new GridBagConstraints();
@@ -103,7 +97,7 @@ public class GameGui extends JFrame{
 		/*
 		 * Join Game menu
 		 */
-		joinGameMenu = new ImagePanel(BGImage);
+		JPanel joinGameMenu = new ImagePanel(BGImage);
 		contentPane.add(joinGameMenu, "join");
 		GridBagLayout gbl_joinGameMenu = new GridBagLayout();
 		joinGameMenu.setLayout(gbl_joinGameMenu);
@@ -140,7 +134,6 @@ public class GameGui extends JFrame{
 
 		serverMsg = new JLabel("");
 		serverMsg.setFont(new Font("Viner Hand ITC", Font.BOLD, 18));
-		Font font = new Font("Viner Hand ITC", Font.BOLD, 18);
 		GridBagConstraints gbc_ServerMsg = new GridBagConstraints();
 		//gbc_ServerMsg.insets = new Insets(0, 0, 5, 5);
 		gbc_ServerMsg.gridx = 1;
@@ -159,10 +152,8 @@ public class GameGui extends JFrame{
 
 		JButton joinGameBtn1 = new JButton("Join Game");
 		joinGameBtn1.setAction(joinGame1);
-		joinGameBtn1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
+		joinGameBtn1.addActionListener(e -> {
+        });
 		joinGameBtn1.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
 		joinGameBtn1.setPreferredSize(new Dimension(200, 50));
 		GridBagConstraints gbc_joinGameBtn1 = new GridBagConstraints();
@@ -173,6 +164,7 @@ public class GameGui extends JFrame{
 
 		JButton backToMainMenuBtn = new JButton("Main menu");
 		backToMainMenuBtn.setFont(new Font("Viner Hand ITC", Font.BOLD, 16));
+		Action BTMM = new BackToMainMenu();
 		backToMainMenuBtn.setAction(BTMM);
 		GridBagConstraints gbc_backToMainMenuBtn = new GridBagConstraints();
 		gbc_backToMainMenuBtn.gridx = 1;
@@ -309,8 +301,6 @@ public class GameGui extends JFrame{
 					serverMsg.setText(messageToPop);
 					serverMsg.updateUI();
 				}
-				Thread clientThread = new Thread(client);
-				clientThread.start();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -332,7 +322,8 @@ public class GameGui extends JFrame{
 
 		@Override
 		public void run() {
-			String nickName = nicknameTxt1.getText();
+			String nickName;
+			nickName = nicknameTxt1.getText();
 			int port = (int)portValue.getValue();
 			int mapSizeInt = (int)mapSize.getValue();
 			try {
@@ -340,20 +331,17 @@ public class GameGui extends JFrame{
 				/**
 				 * Progress bar actualization thread
 				 */
-				Thread progresUpdate = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						while(server.returnWorldMapProgress()<1.){
-							progressBar.setValue((int)(100*server.returnWorldMapProgress()));
-							try {
-								Thread.currentThread();
-								Thread.sleep(1);
-							} catch (InterruptedException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				});
+				Thread progresUpdate = new Thread(() -> {
+                    while(server.returnWorldMapProgress()<1.){
+                        progressBar.setValue((int)(100*server.returnWorldMapProgress()));
+                        try {
+                            Thread.currentThread();
+                            Thread.sleep(1);
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                });
 				Thread serverThread = new Thread(server);
 				this.exec.execute(progresUpdate);
 				this.exec.execute(serverThread);
@@ -367,8 +355,6 @@ public class GameGui extends JFrame{
 					serverMsg.setText(messageToPop);
 					serverMsg.updateUI();
 				}
-				Thread clientThread = new Thread(client);
-				this.exec.execute(clientThread);//.start();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 

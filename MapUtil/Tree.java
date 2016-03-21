@@ -1,10 +1,6 @@
 package MapUtil;
 
 import java.io.Serializable;
-import java.time.*;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Implementation of Tree object on the game environment. Log - in polish is a pień.
